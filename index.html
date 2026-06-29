@@ -280,14 +280,93 @@
                         <h3 style="color: var(--primary);">Need 2 ReactJS Devs for SWE202c</h3>
                         <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;">Posted by: Nguyen D • Deadline: Oct 15</p>
                     </div>
+                    <span class="tag" style="background: #dcfce7; color: #166534;">Open</span>
                 </div>
-                <p style="margin: 16px 0;">We are building an E-commerce simulator. Need teammates strong in HTML/CSS/JS and ReactJS.</p>
+                <p style="margin: 16px 0;">We are building an E-commerce simulator. Need teammates strong in HTML/CSS/JS and ReactJS. Current team size: 3/5.</p>
                 <button class="btn btn-outline" id="btn-apply-project">Apply to Project</button>
             </div>
         </section>
 
-        <section id="leaderboard-view" class="view-section"><h2 class="section-title">Reputation Leaderboard</h2><div class="card"><p>Leaderboard Data...</p></div></section>
-        <section id="admin-view" class="view-section"><h2 class="section-title">Admin Portal</h2><div class="card"><p>Admin Data...</p></div></section>
+        <section id="leaderboard-view" class="view-section">
+            <h2 class="section-title">Reputation Leaderboard</h2>
+            <div class="card">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Student</th>
+                            <th>Major</th>
+                            <th>Reputation Score</th>
+                            <th>Projects Done</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><i class="fa-solid fa-medal" style="color: gold; font-size: 1.5rem;"></i></td>
+                            <td style="font-weight: 600;">Le Hoang E</td>
+                            <td>Software Engineering</td>
+                            <td>4.9 / 5.0 (42 reviews)</td>
+                            <td>12</td>
+                        </tr>
+                        <tr>
+                            <td><i class="fa-solid fa-medal" style="color: silver; font-size: 1.5rem;"></i></td>
+                            <td style="font-weight: 600;">Pham Thi F</td>
+                            <td>Digital Marketing</td>
+                            <td>4.8 / 5.0 (38 reviews)</td>
+                            <td>9</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="admin-view" class="view-section">
+            <h2 class="section-title" style="font-family: monospace;">SYSTEM ADMINISTRATION</h2>
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div style="color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase;">Total Users</div>
+                    <div class="kpi-value">4,821</div>
+                </div>
+                <div class="kpi-card">
+                    <div style="color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase;">Active Projects</div>
+                    <div class="kpi-value">342</div>
+                </div>
+                <div class="kpi-card">
+                    <div style="color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase;">Successful Matches</div>
+                    <div class="kpi-value">1,205</div>
+                </div>
+                <div class="kpi-card" style="border-color: var(--danger);">
+                    <div style="color: var(--danger); font-size: 0.9rem; text-transform: uppercase;">Reported Accounts</div>
+                    <div class="kpi-value">14</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Recent Reports</h3>
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Student Name</th>
+                            <th>Report Type</th>
+                            <th>Reason</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Vu Van G</td>
+                            <td><span class="status-badge status-warning">Freerider</span></td>
+                            <td>Did not contribute to final assignment</td>
+                            <td>Pending Review</td>
+                            <td>
+                                <button class="btn btn-outline" style="padding: 4px 8px; font-size: 0.8rem; color: var(--danger);">Ban/Lock</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
 
     </main>
 
@@ -364,7 +443,7 @@
         // 2. Nút AI Bio & Save Profile
         document.getElementById('btn-generate-bio').addEventListener('click', () => {
             requireAuthentication(() => {
-                document.getElementById('bio-textarea').value = "Passionate Software Engineering student...";
+                document.getElementById('bio-textarea').value = "Passionate Software Engineering student specializing in Java and SQL Server development. With a current GPA of 8.5, I am highly responsible and seeking collaborative teammates for enterprise application projects.";
                 showToast("Bio generated successfully!");
             });
         });
