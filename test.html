@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swipe Card Teammate Matching</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #9333ea 100%);
+            --secondary: #9333ea;
+            --bg-color: #f8fafc;
+            --surface: #ffffff;
+            --surface-glass: rgba(255, 255, 255, 0.8);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --radius-md: 12px;
+            --radius-lg: 20px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+
+        /* --- TOAST NOTIFICATION --- */
+        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+        .toast { background: var(--surface); border-left: 4px solid var(--primary); padding: 16px 24px; border-radius: 8px; box-shadow: var(--shadow-md); animation: slideInRight 0.3s ease forwards; display: flex; align-items: center; gap: 12px; }
+        .toast.success { border-color: var(--success); }
+        .toast.success i { color: var(--success); }
+        .toast.error { border-color: var(--warning); }
+        .toast.error i { color: var(--warning); }
+        @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
+
+        /* --- SIDEBAR --- */
+        #sidebar { width: 260px; background: var(--surface-glass); backdrop-filter: blur(12px); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 24px 16px; transition: all 0.3s; z-index: 100; }
+        .logo { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 1.25rem; color: var(--primary); margin-bottom: 40px; padding: 0 12px; }
+        .guest-badge { display: none; font-size: 0.7rem; background: var(--warning); color: white; padding: 2px 6px; border-radius: 4px; vertical-align: middle; margin-left: auto;}
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; margin-bottom: 8px; border-radius: var(--radius-md); color: var(--text-muted); cursor: pointer; transition: all 0.2s; font-weight: 500; }
+        .nav-item:hover { background: #f1f5f9; color: var(--text-main); }
+        .nav-item.active { background: var(--primary-gradient); color: white; box-shadow: var(--shadow-sm); }
+        
+        /* --- MAIN CONTENT --- */
+        #main-content { flex: 1; overflow-y: auto; padding: 32px; position: relative; }
+        .view-section { display: none; animation: fadeIn 0.4s ease; max-width: 1000px; margin: 0 auto; height: 100%; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        h2.section-title { font-size: 1.75rem; margin-bottom: 24px; color: var(--text-main); }
+        .card { background: var(--surface); border-radius: var(--radius-lg); padding: 32px; box-shadow: var(--shadow-md); border: 1px solid rgba(255,255,255,0.5); }
+        
+        /* Form & Buttons */
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; margin-bottom: 8px; font-size: 0.875rem; font-weight: 500; color: var(--text-muted); }
+        .input-group input, .input-group textarea, .input-group select { width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px; outline: none; transition: border 0.2s; font-family: inherit; }
+        .input-group input:focus, .input-group textarea:focus { border-color: var(--primary); }
+        
+        .btn { padding: 12px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-primary { background: var(--primary-gradient); color: white; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(79, 70, 229, 0.4); }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
+        .btn-outline:hover { background: #f1f5f9; }
+
+        .tag { background: #e0e7ff; color: var(--primary); padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; display: inline-block; margin: 4px 2px; }
+
+        /* --- 1. AUTH VIEW --- */
+        #auth-view .auth-container { max-width: 450px; margin: 40px auto; text-align: center; }
+        .fap-btn { width: 100%; padding: 16px; font-size: 1.1rem; background: #f97316; background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: white; margin-top: 20px; }
+        .fap-btn:hover { box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3); }
+        .loader { border: 3px solid rgba(255,255,255,0.3); border-top: 3px solid white; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: none; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* --- 2. PROFILE VIEW --- */
+        .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .ai-bio-box { position: relative; }
+        .ai-btn { background: #000; color: #fff; margin-bottom: 12px; font-size: 0.85rem; padding: 8px 16px; }
+
+        /* --- 3. SWIPE ARENA --- */
+        .swipe-container { display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: center; }
+        .swipe-card { width: 100%; max-width: 400px; background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); overflow: hidden; position: relative; transition: transform 0.3s ease, opacity 0.3s ease; }
+        .swipe-card.pass { transform: translateX(-100px) rotate(-10deg); opacity: 0; pointer-events: none; }
+        .swipe-card.match { transform: translateX(100px) rotate(10deg); opacity: 0; pointer-events: none; }
+        .card-img { width: 100%; height: 250px; background: #cbd5e1; object-fit: cover; }
+        .card-info { padding: 24px; }
+        .card-info h3 { font-size: 1.5rem; margin-bottom: 8px; }
+        .card-info p { color: var(--text-muted); margin-bottom: 16px; font-size: 0.9rem; line-height: 1.5; }
+        .action-buttons { display: flex; justify-content: space-around; padding: 20px; background: #f8fafc; border-top: 1px solid var(--border); }
+        .action-btn { width: 60px; height: 60px; border-radius: 50%; border: none; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; box-shadow: var(--shadow-sm); }
+        .btn-pass { background: white; color: var(--danger); border: 2px solid #fecaca; }
+        .btn-pass:hover { transform: scale(1.1); background: #fef2f2; }
+        .btn-match { background: white; color: var(--success); border: 2px solid #a7f3d0; }
+        .btn-match:hover { transform: scale(1.1); background: #ecfdf5; }
+
+        /* --- 4. MATCH & CHAT HUB --- */
+        .chat-layout { display: flex; height: 75vh; border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-md); border: 1px solid var(--border); }
+        .chat-sidebar { width: 300px; background: var(--surface); border-right: 1px solid var(--border); overflow-y: auto; }
+        .chat-main { flex: 1; background: #f1f5f9; display: flex; flex-direction: column; }
+        .chat-contact { padding: 16px; display: flex; gap: 12px; border-bottom: 1px solid var(--border); cursor: pointer; }
+        .chat-contact:hover { background: #f8fafc; }
+        .avatar { width: 48px; height: 48px; border-radius: 50%; background: #cbd5e1; }
+        .chat-messages { flex: 1; padding: 24px; overflow-y: auto; }
+        .message { margin-bottom: 16px; max-width: 70%; padding: 12px 16px; border-radius: 16px; font-size: 0.9rem; }
+        .msg-received { background: var(--surface); align-self: flex-start; border-bottom-left-radius: 4px; }
+        .msg-sent { background: var(--primary); color: white; align-self: flex-end; margin-left: auto; border-bottom-right-radius: 4px; }
+        .chat-input { padding: 16px; background: var(--surface); border-top: 1px solid var(--border); display: flex; gap: 12px; }
+
+        /* --- 7. ADMIN DASHBOARD --- */
+        #admin-view { max-width: 1200px; }
+        #admin-view .card { border-radius: 8px; border-top: 4px solid var(--text-main); }
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
+        .kpi-card { background: var(--surface); padding: 20px; border-radius: 8px; box-shadow: var(--shadow-sm); border: 1px solid var(--border); }
+        .kpi-value { font-size: 2rem; font-weight: 700; color: var(--text-main); margin-top: 8px; }
+        .admin-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .admin-table th, .admin-table td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); }
+        .admin-table th { background: #f1f5f9; color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; }
+        .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+        .status-warning { background: #fef08a; color: #854d0e; }
+
+    </style>
+</head>
+<body>
+
+    <div id="toast-container"></div>
+
+    <nav id="sidebar">
+        <div class="logo">
+            <i class="fa-solid fa-layer-group"></i>
+            <span>TeamMatch</span>
+            <span class="guest-badge" id="guest-badge">GUEST</span>
+        </div>
+        
+        <div class="nav-item active" data-target="auth-view">
+            <i class="fa-solid fa-right-to-bracket"></i> Login / Verify
+        </div>
+        <div class="nav-item" data-target="profile-view">
+            <i class="fa-solid fa-user-pen"></i> Profile Setup
+        </div>
+        <div class="nav-item" data-target="swipe-view">
+            <i class="fa-solid fa-fire"></i> Swipe Arena
+        </div>
+        <div class="nav-item" data-target="chat-view">
+            <i class="fa-solid fa-comments"></i> Match & Chat
+        </div>
+        <div class="nav-item" data-target="project-view">
+            <i class="fa-solid fa-clipboard-list"></i> Project Board
+        </div>
+        <div class="nav-item" data-target="leaderboard-view">
+            <i class="fa-solid fa-trophy"></i> Leaderboard
+        </div>
+        <hr style="border:0; border-top:1px solid var(--border); margin: 20px 0;">
+        <div class="nav-item" data-target="admin-view" style="color: var(--danger);">
+            <i class="fa-solid fa-shield-halved"></i> Admin Portal
+        </div>
+    </nav>
+
+    <main id="main-content">
+
+        <section id="auth-view" class="view-section active">
+            <div class="auth-container">
+                <div class="card">
+                    <h2 style="margin-bottom: 8px;">Welcome Student</h2>
+                    <p style="color: var(--text-muted); margin-bottom: 32px;">Join the academic collaboration hub.</p>
+                    
+                    <button class="btn fap-btn" id="btn-fap-login">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                        <span>Login with FAP (Academic Portal)</span>
+                        <div class="loader" id="fap-loader"></div>
+                    </button>
+
+                    <div style="margin: 24px 0; color: var(--text-muted); font-size: 0.9rem;">OR</div>
+                    
+                    <button class="btn btn-outline" id="btn-guest-login" style="width: 100%;">
+                        <i class="fa-solid fa-user-secret"></i> Continue as Guest
+                    </button>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 12px;">Guests can view profiles and projects but cannot interact or match.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="profile-view" class="view-section">
+            <h2 class="section-title">Build Your Academic Profile</h2>
+            <div class="card">
+                <div class="profile-grid">
+                    <div>
+                        <div class="input-group">
+                            <label>Full Name</label>
+                            <input type="text" value="Nguyen Van A">
+                        </div>
+                        <div class="input-group">
+                            <label>Major & Semester</label>
+                            <input type="text" value="Software Engineering - Semester 5">
+                        </div>
+                        <div class="input-group">
+                            <label>Tech Skills (Comma separated)</label>
+                            <input type="text" value="Java, Spring Boot, ReactJS, SQL Server">
+                        </div>
+                    </div>
+                    <div class="ai-bio-box">
+                        <div class="input-group">
+                            <label>Professional Bio</label>
+                            <button class="btn ai-btn" id="btn-generate-bio">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Generate Bio with AI
+                            </button>
+                            <textarea id="bio-textarea" rows="8" placeholder="Tell teammates about yourself..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-primary" id="btn-save-profile">Save Profile</button>
+            </div>
+        </section>
+
+        <section id="swipe-view" class="view-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <h2 class="section-title" style="margin:0;">Discover Teammates</h2>
+                <button class="btn btn-outline"><i class="fa-solid fa-filter"></i> Filters</button>
+            </div>
+            
+            <div class="swipe-container">
+                <div class="swipe-card" id="current-card">
+                    <img src="https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80" alt="Avatar" class="card-img">
+                    <div class="card-info">
+                        <h3>Tran Minh B <span style="font-size:1rem; color:var(--text-muted); font-weight:normal;">• Sem 5</span></h3>
+                        <p style="font-weight: 500; color: var(--primary);">Software Engineering (GPA: 8.5)</p>
+                        <div style="margin-bottom: 12px;">
+                            <span class="tag">ReactJS</span>
+                            <span class="tag">UI/UX Design</span>
+                            <span class="tag">Figma</span>
+                        </div>
+                        <p>Looking for a strong Backend Developer to join Capstone Project. I handle all Frontend and UI/UX tasks.</p>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="action-btn btn-pass" id="btn-swipe-pass"><i class="fa-solid fa-xmark"></i></button>
+                        <button class="action-btn btn-match" id="btn-swipe-match"><i class="fa-solid fa-heart"></i></button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="chat-view" class="view-section">
+            <h2 class="section-title">Messages & Teams</h2>
+            <div class="chat-layout card" style="padding: 0;">
+                <div class="chat-sidebar">
+                    <div style="padding: 16px; font-weight: 600; border-bottom: 1px solid var(--border);">Recent Matches</div>
+                    <div class="chat-contact" style="background: #f1f5f9;">
+                        <img src="https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80" class="avatar">
+                        <div>
+                            <div style="font-weight: 600; font-size: 0.95rem;">Tran Minh B</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">It's a match! Say hi 👋</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-main">
+                    <div style="padding: 16px; background: var(--surface); border-bottom: 1px solid var(--border); font-weight: 600;">
+                        Chatting with Tran Minh B
+                    </div>
+                    <div class="chat-messages">
+                        <div class="message msg-received">Hey! Saw we matched. Are you still looking for a Frontend dev?</div>
+                    </div>
+                    <div class="chat-input">
+                        <input type="text" placeholder="Type a message..." style="flex:1; border: 1px solid var(--border); border-radius: 8px; padding: 0 16px;">
+                        <button class="btn btn-primary" id="btn-send-chat"><i class="fa-solid fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="project-view" class="view-section">
+            <h2 class="section-title">Project Recruitment Board</h2>
+            <div class="card" style="margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <h3 style="color: var(--primary);">Need 2 ReactJS Devs for SWE202c</h3>
+                        <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;">Posted by: Nguyen D • Deadline: Oct 15</p>
+                    </div>
+                </div>
+                <p style="margin: 16px 0;">We are building an E-commerce simulator. Need teammates strong in HTML/CSS/JS and ReactJS.</p>
+                <button class="btn btn-outline" id="btn-apply-project">Apply to Project</button>
+            </div>
+        </section>
+
+        <section id="leaderboard-view" class="view-section"><h2 class="section-title">Reputation Leaderboard</h2><div class="card"><p>Leaderboard Data...</p></div></section>
+        <section id="admin-view" class="view-section"><h2 class="section-title">Admin Portal</h2><div class="card"><p>Admin Data...</p></div></section>
+
+    </main>
+
+    <script>
+        // --- TRẠNG THÁI GUEST ---
+        let isGuestMode = false;
+        const guestBadge = document.getElementById('guest-badge');
+
+        // Hàm kiểm tra quyền: Nếu là guest thì báo lỗi và dừng hành động
+        function requireAuthentication(actionFunction) {
+            if (isGuestMode) {
+                showToast("View Only Mode: Guest cannot perform this action. Please log in as a student.", "error");
+            } else {
+                actionFunction();
+            }
+        }
+
+        // --- GUEST LOGIN LOGIC ---
+        const btnGuestLogin = document.getElementById('btn-guest-login');
+        btnGuestLogin.addEventListener('click', () => {
+            isGuestMode = true;
+            guestBadge.style.display = 'inline-block'; // Hiện badge GUEST ở logo
+            showToast("Logged in as Guest. You are in View-Only mode.", "success");
+            
+            // Tự động chuyển sang màn hình Swipe để xem
+            document.querySelector('.nav-item[data-target="swipe-view"]').click();
+        });
+
+        // --- FAP LOGIN LOGIC ---
+        const btnFap = document.getElementById('btn-fap-login');
+        const fapLoader = document.getElementById('fap-loader');
+        btnFap.addEventListener('click', () => {
+            btnFap.querySelector('span').style.display = 'none';
+            fapLoader.style.display = 'block';
+            
+            setTimeout(() => {
+                fapLoader.style.display = 'none';
+                btnFap.querySelector('span').style.display = 'inline';
+                
+                isGuestMode = false;
+                guestBadge.style.display = 'none'; // Ẩn badge GUEST
+                
+                showToast("Authentication Successful! Verified as Student.");
+                document.querySelector('.nav-item[data-target="profile-view"]').click();
+            }, 1000);
+        });
+
+        // --- GẮN KIỂM TRA QUYỀN VÀO CÁC NÚT TƯƠNG TÁC ---
+
+        // 1. Nút Swipe Pass & Match
+        const card = document.getElementById('current-card');
+        document.getElementById('btn-swipe-pass').addEventListener('click', () => {
+            requireAuthentication(() => {
+                card.classList.add('pass');
+                setTimeout(resetCard, 500);
+            });
+        });
+
+        document.getElementById('btn-swipe-match').addEventListener('click', () => {
+            requireAuthentication(() => {
+                card.classList.add('match');
+                showToast("It's a Match! You can now chat in the Hub.");
+                setTimeout(resetCard, 500);
+            });
+        });
+
+        function resetCard() {
+            card.style.transition = 'none';
+            card.classList.remove('pass', 'match');
+            void card.offsetWidth;
+            card.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+        }
+
+        // 2. Nút AI Bio & Save Profile
+        document.getElementById('btn-generate-bio').addEventListener('click', () => {
+            requireAuthentication(() => {
+                document.getElementById('bio-textarea').value = "Passionate Software Engineering student...";
+                showToast("Bio generated successfully!");
+            });
+        });
+
+        document.getElementById('btn-save-profile').addEventListener('click', () => {
+            requireAuthentication(() => showToast("Profile saved successfully!"));
+        });
+
+        // 3. Nút Apply Project
+        document.getElementById('btn-apply-project').addEventListener('click', () => {
+            requireAuthentication(() => showToast("Application sent to the project owner!"));
+        });
+
+        // 4. Nút Gửi tin nhắn Chat
+        document.getElementById('btn-send-chat').addEventListener('click', () => {
+            requireAuthentication(() => showToast("Message sent!"));
+        });
+
+        // --- Navigation Logic ---
+        const navItems = document.querySelectorAll('.nav-item');
+        const views = document.querySelectorAll('.view-section');
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                navItems.forEach(nav => nav.classList.remove('active'));
+                item.classList.add('active');
+                const targetId = item.getAttribute('data-target');
+                views.forEach(view => {
+                    view.classList.remove('active');
+                    if (view.id === targetId) view.classList.add('active');
+                });
+            });
+        });
+
+        // --- Toast Notification System ---
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            const icon = type === 'success' ? '<i class="fa-solid fa-circle-check"></i>' : '<i class="fa-solid fa-triangle-exclamation"></i>';
+            toast.innerHTML = `${icon} <div>${message}</div>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'fadeOut 0.3s ease forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
